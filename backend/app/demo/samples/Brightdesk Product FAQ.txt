@@ -1,0 +1,27 @@
+# Brightdesk product FAQ
+
+Brightdesk is a fictional help-desk app made up for the DocuMind demo.
+
+# Plans and pricing
+
+Brightdesk has three plans. Starter is free for up to 3 agents. Team costs 15 USD per agent per month. Business costs 39 USD per agent per month and adds single sign-on and audit logs.
+Annual billing gives a 20% discount on Team and Business.
+
+# Trial and cancellation
+
+Every paid plan starts with a 14-day free trial; no credit card is needed.
+You can cancel at any time from Settings > Billing. Monthly plans stop at the end of the current billing period. Annual plans are refunded pro rata within the first 30 days only.
+
+# Data and security
+
+Customer data is stored in the EU (Frankfurt) by default. US hosting is available on the Business plan.
+Backups run every 6 hours and are kept for 30 days.
+Brightdesk encrypts data in transit with TLS 1.3 and at rest with AES-256.
+
+# Support
+
+Starter customers get community support. Team customers get email support with a response within one business day. Business customers get 24/7 chat support with a 1-hour response target for urgent tickets.
+
+# Integrations
+
+Brightdesk connects to Slack, Microsoft Teams, Jira and Shopify. A public REST API is available on Team and Business plans, limited to 600 requests per minute.

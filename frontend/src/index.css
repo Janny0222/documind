@@ -1,0 +1,208 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/plus-jakarta-sans";
+
+/*
+ * DocuMind design tokens - "Calm intelligence" (docs/PHASE-1-ARCHITECTURE.md §F)
+ *
+ * - Surfaces are a faint lavender, never neutral grey: the brand hue lives in the neutrals.
+ * - One confident violet does all the work for actions/focus. The violet→indigo gradient is
+ *   reserved for AI affordances only (ask bar, AI answers), so it always *means* "AI".
+ * - Radius follows hierarchy: controls md, cards xl, the hero ask bar 2xl.
+ */
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Plus Jakarta Sans Variable", "Inter Variable", ui-sans-serif, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ai-from: var(--ai-from);
+  --color-ai-to: var(--ai-to);
+  --color-file-pdf: var(--file-pdf);
+  --color-file-docx: var(--file-docx);
+  --color-file-txt: var(--file-txt);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--card);
+  --color-sidebar-foreground: var(--foreground);
+  --color-sidebar-primary: var(--primary);
+  --color-sidebar-primary-foreground: var(--primary-foreground);
+  --color-sidebar-accent: var(--accent);
+  --color-sidebar-accent-foreground: var(--accent-foreground);
+  --color-sidebar-border: var(--border);
+  --color-sidebar-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.35);
+  --radius-2xl: calc(var(--radius) * 1.75);
+  --radius-3xl: calc(var(--radius) * 2.25);
+  --radius-4xl: calc(var(--radius) * 2.75);
+
+  --shadow-soft: 0 1px 2px rgb(40 24 90 / 0.04), 0 8px 24px -12px rgb(40 24 90 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(40 24 90 / 0.05), 0 18px 40px -18px rgb(76 29 149 / 0.28);
+}
+
+:root {
+  --radius: 0.75rem;
+
+  --background: #f7f6fc;          /* lavender paper */
+  --foreground: #18152b;          /* violet-ink */
+  --card: #ffffff;
+  --card-foreground: #18152b;
+  --popover: #ffffff;
+  --popover-foreground: #18152b;
+  --primary: #7c3aed;             /* DocuMind violet */
+  --primary-foreground: #ffffff;
+  --secondary: #efedf7;
+  --secondary-foreground: #2a2540;
+  --muted: #f0eef7;
+  --muted-foreground: #625e78;    /* 5.6:1 on card */
+  --accent: #f1ecfe;              /* violet wash for hover/selected */
+  --accent-foreground: #5b21b6;
+  --destructive: #dc2626;
+  --success: #0e9f6e;
+  --warning: #b45309;
+  --border: #e7e4f2;
+  --input: #dcd8ec;
+  --ring: #7c3aed;
+
+  --ai-from: #7c3aed;
+  --ai-to: #4f46e5;
+
+  --file-pdf: #e5484d;
+  --file-docx: #2f6fed;
+  --file-txt: #64748b;
+
+  /* Chart series: validated (dataviz validator) for CVD + contrast on the light card surface. */
+  --chart-1: #7c3aed;
+  --chart-2: #0891b2;
+  --chart-3: #0e9f6e;
+  --chart-4: #f59e0b;
+  --chart-5: #a78bfa;
+}
+
+.dark {
+  --background: #0f0d18;
+  --foreground: #ecebf5;
+  --card: #171423;
+  --card-foreground: #ecebf5;
+  --popover: #1b1829;
+  --popover-foreground: #ecebf5;
+  --primary: #8b5cf6;
+  --primary-foreground: #ffffff;
+  --secondary: #221e33;
+  --secondary-foreground: #e4e1f2;
+  --muted: #1f1b2e;
+  --muted-foreground: #a19db8;
+  --accent: #261f40;
+  --accent-foreground: #c9b8ff;
+  --destructive: #f87171;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --border: #2a2640;
+  --input: #332e4b;
+  --ring: #a78bfa;
+
+  --ai-from: #8b5cf6;
+  --ai-to: #6366f1;
+
+  --file-pdf: #f87171;
+  --file-docx: #6b9cff;
+  --file-txt: #94a3b8;
+
+  /* Dark steps validated separately against #171423 (not an automatic flip). */
+  --chart-1: #8b5cf6;
+  --chart-2: #0ea5c0;
+  --chart-3: #34d399;
+  --chart-4: #fbbf24;
+  --chart-5: #c4b5fd;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans antialiased;
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01"; /* Inter: single-storey a, open digits */
+  }
+  h1, h2, h3, h4 {
+    @apply font-heading tracking-tight;
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+}
+
+@layer utilities {
+  /* The AI signature: only for things that talk to the model. */
+  .bg-ai {
+    background-image: linear-gradient(135deg, var(--ai-from), var(--ai-to));
+  }
+  .text-ai {
+    background-image: linear-gradient(135deg, var(--ai-from), var(--ai-to));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .ring-ai {
+    background:
+      linear-gradient(var(--card), var(--card)) padding-box,
+      linear-gradient(135deg, var(--ai-from), var(--ai-to)) border-box;
+    border: 1.5px solid transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,40 @@
+# Client Services Agreement (sample)
+
+This agreement is between Lumen & Pine Design Co. ("the Studio") and Harbor Light Coffee ("the Client"). Both parties are fictional; this is sample content for the DocuMind demo.
+
+# Scope of work
+
+The Studio will deliver a brand identity (logo, color palette, typography guidelines) and a five-page marketing website.
+Each deliverable includes two rounds of revisions. Additional revisions are billed at the hourly rate of 95 USD.
+
+# Fees and payment terms
+
+The total project fee is 18,000 USD.
+40% is due when the agreement is signed, 40% on approval of the brand identity, and 20% on website launch.
+Invoices are payable within 30 days of the invoice date (net 30).
+Late payments incur a fee of 1.5% per month on the overdue amount.
+The Studio may pause work if any invoice is more than 45 days overdue.
+
+# Timeline
+
+The project starts on the signing date and is planned to take 12 weeks.
+Delays caused by late Client feedback extend the timeline by the same number of days.
+
+# Intellectual property
+
+Ownership of final deliverables transfers to the Client after full payment.
+The Studio may show the work in its portfolio unless the Client objects in writing.
+
+# Confidentiality
+
+Both parties keep the other's confidential information private for three years after the agreement ends.
+
+# Termination
+
+Either party may terminate this agreement with 30 days written notice.
+If the Client terminates, it pays for all work completed up to the termination date.
+Either party may terminate immediately if the other materially breaches the agreement and does not fix it within 14 days of notice.
+
+# Liability
+
+The Studio's total liability under this agreement is limited to the fees paid in the 12 months before the claim.

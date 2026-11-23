@@ -1,0 +1,70 @@
+[project]
+name = "documind-api"
+version = "0.1.0"
+description = "DocuMind - AI-powered document intelligence API"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic[email]>=2.9",
+    "pydantic-settings>=2.6",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30",
+    "alembic>=1.14",
+    "pgvector>=0.3.6",
+    "pwdlib[argon2]>=0.2.1",
+    "pyjwt>=2.10",
+    "structlog>=24.4",
+    "uuid6>=2024.7.10",
+    "pymupdf>=2.1",
+    "python-docx>=1.2.0",
+    "charset-normalizer>=3.5.2",
+    "boto3>=1.44.9",
+    "python-multipart>=0.0.34",
+    "google-genai>=3.6.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=1.0",
+    "httpx>=0.28",
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "moto[server]>=5.2.5",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+filterwarnings = ["error::DeprecationWarning:app.*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "ASYNC", "RUF", "SIM"]
+ignore = ["S101", "B008", "E501"]  # E501: line length is owned by `ruff format`
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106", "S603"]
+"migrations/**" = ["E501"]
+
+[tool.mypy]
+python_version = "3.14"
+plugins = ["pydantic.mypy"]
+strict = true
+ignore_missing_imports = true
+exclude = ["migrations/", "tests/"]
+
+[[tool.mypy.overrides]]
+# PyMuPDF ships no type hints; this module is the only place that calls it.
+module = "app.rag.parsing"
+disallow_untyped_calls = false

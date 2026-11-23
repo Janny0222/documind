@@ -1,0 +1,56 @@
+name: Deploy API
+
+# Runs after CI passes on main: migrate Neon first, then ask Render to deploy the new image.
+# (The frontend deploys separately: Cloudflare Pages builds main by itself.)
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-api
+  cancel-in-progress: false # never interrupt a migration
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      MIGRATIONS_DATABASE_URL: ${{ secrets.NEON_DIRECT_URL }}
+      DATABASE_URL: ${{ secrets.NEON_DIRECT_URL }}
+      RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+      API_URL: ${{ secrets.API_URL }}
+      # Settings requires a JWT secret to load; migrations never use it.
+      JWT_SECRET: migrations-only-not-used-for-signing-0000000000
+    steps:
+      - name: Check secrets
+        run: |
+          for name in MIGRATIONS_DATABASE_URL RENDER_DEPLOY_HOOK_URL API_URL; do
+            if [ -z "${!name}" ]; then echo "::error::Secret for $name is not set (see docs/DEPLOY.md)"; exit 1; fi
+          done
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv python install 3.14
+      - run: uv sync --frozen --no-dev
+      - name: Migrate database
+        run: uv run alembic upgrade head
+      - name: Trigger Render deploy
+        run: curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL" > /dev/null
+      - name: Wait until the new version is healthy
+        run: |
+          # Render builds the image (a few minutes), then swaps traffic. /readyz also proves the DB is migrated.
+          for i in $(seq 1 60); do
+            if curl -fsS --max-time 20 "$API_URL/readyz"; then echo; exit 0; fi
+            sleep 15
+          done
+          echo "::error::API did not become ready within 15 minutes"; exit 1

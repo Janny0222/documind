@@ -1,0 +1,39 @@
+# Local development stack.
+#   docker compose up -d db          -> Postgres 17 + pgvector only (run the API with uv on the host)
+#   docker compose up --build        -> db + API container
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    # Comes back by itself whenever Docker Desktop starts (until you stop it explicitly).
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: documind
+      POSTGRES_PASSWORD: documind
+      POSTGRES_DB: documind
+    ports:
+      - "5433:5432"  # host 5433: a native Windows Postgres often already owns 5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U documind -d documind"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: ./backend
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://documind:documind@db:5432/documind
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ["api"]
+
+volumes:
+  pgdata:
