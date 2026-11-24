@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.errors import Conflict, Forbidden, NotFound
+from app.core.logging import get_logger
 from app.integrations.storage import LocalStorage, document_key, get_storage
 from app.models import (
     CollectionDocument,
@@ -35,6 +36,7 @@ from app.services.auth_service import utcnow
 from app.services.workspace_service import WorkspaceContext
 from app.workers.queue import enqueue
 
+log = get_logger(__name__)
 LIVE = Document.deleted_at.is_(None)
 _UNSAFE_NAME = re.compile(r"[\x00-\x1f\x7f/\\]")
 TYPE_BY_MIME = {mime: kind.value for kind, mime in MIME.items()}
@@ -190,6 +192,21 @@ async def upload_files(
                         )
                     )
                     continue
+
+                if s.max_total_storage_mb:
+                    used = (
+                        await db.execute(
+                            select(func.coalesce(func.sum(Document.size_bytes), 0)).where(LIVE)
+                        )
+                    ).scalar_one()
+                    if used + size > s.max_total_storage_mb * 1024 * 1024:
+                        log.warning("storage_cap_reached", used_bytes=int(used), file_bytes=size)
+                        raise ValidationError(
+                            "storage_full",
+                            "This DocuMind server has run out of upload space. Existing "
+                            "documents still work; try again later or delete documents you "
+                            "no longer need.",
+                        )
 
                 doc_id = uuid.uuid4()
                 key = document_key(ctx.id, doc_id)
@@ -418,7 +435,7 @@ async def reprocess(db: AsyncSession, ctx: WorkspaceContext, document_id: uuid.U
 
 
 async def download_target(ctx: WorkspaceContext, doc: Document) -> str | None:
-    """Presigned URL for S3/R2, or None when the API must stream the file itself (local)."""
+    """Presigned URL for S3 (B2/R2), or None when the API must stream the file itself (local)."""
     storage = get_storage()
     if isinstance(storage, LocalStorage):
         return None

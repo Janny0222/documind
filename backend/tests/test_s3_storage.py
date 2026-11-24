@@ -1,4 +1,4 @@
-"""S3Storage (production uses Cloudflare R2) against moto's S3 emulator over real HTTP.
+"""S3Storage (production: Backblaze B2 or Cloudflare R2) against moto's S3 emulator over real HTTP.
 
 This is the only code path between the app and the production bucket, so it gets a real
 round-trip test: upload, download, presigned URL, and prefix deletion.
@@ -14,7 +14,7 @@ from moto.server import ThreadedMotoServer
 from pydantic import SecretStr
 
 from app.core.config import get_settings
-from app.integrations.storage import S3Storage, StorageError, document_key
+from app.integrations.storage import S3Storage, StorageError, document_key, s3_region_for
 
 
 @pytest.fixture
@@ -69,3 +69,13 @@ async def test_round_trip_presign_and_prefix_delete(s3: S3Storage, tmp_path: Pat
 async def test_missing_object_raises_storage_error(s3: S3Storage, tmp_path: Path) -> None:
     with pytest.raises(StorageError):
         await s3.download_to("ws/nope/docs/nope/x", tmp_path / "x")
+
+
+def test_backblaze_region_is_read_from_the_endpoint() -> None:
+    assert s3_region_for("https://s3.us-west-004.backblazeb2.com", "auto") == "us-west-004"
+    assert (
+        s3_region_for("https://acct.r2.cloudflarestorage.com", "auto") == "auto"
+    )  # R2 wants "auto"
+    assert (
+        s3_region_for("https://s3.us-west-004.backblazeb2.com", "eu-x") == "eu-x"
+    )  # explicit wins

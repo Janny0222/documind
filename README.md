@@ -8,7 +8,7 @@ numbered citations that open the source page with the passage highlighted. If th
 answer, it says so instead of guessing.
 
 **Stack:** React 19 + TypeScript + Tailwind/shadcn · FastAPI (Python 3.14) · Postgres 17 + pgvector · Google Gemini ·
-Cloudflare Pages + R2 · Render · Neon · GitHub Actions. Runs on free tiers.
+Cloudflare Pages · Render · Neon · Backblaze B2 · GitHub Actions. Runs on free tiers.
 
 ## What it does
 
@@ -32,7 +32,7 @@ flowchart LR
   B[Browser] --> P[Cloudflare Pages<br/>React SPA + /api proxy]
   P --> A[FastAPI on Render<br/>API + in-process job runner]
   A --> DB[(Neon Postgres<br/>relational + halfvec + FTS + job queue)]
-  A --> R2[(R2 private bucket)]
+  A --> B2[(Backblaze B2 private bucket)]
   A --> G[Gemini<br/>embeddings + Flash-Lite]
 ```
 
@@ -61,7 +61,7 @@ Open http://localhost:5173. Set `GEMINI_API_KEY` in `backend/.env` for real answ
 
 | | Command | What runs |
 |---|---|---|
-| API | `uv run pytest` | 118 tests against real Postgres + pgvector: auth, isolation, ingestion, RAG, demo, proxy |
+| API | `uv run pytest` | 120 tests against real Postgres + pgvector: auth, isolation, ingestion, RAG, demo, proxy, storage cap |
 | API | `uv run ruff check . && uv run mypy app` | Lint and strict types |
 | Web | `pnpm test` | 45 Vitest + Testing Library tests with MSW |
 | Web | `pnpm lint && pnpm typecheck && pnpm build` | oxlint (with a11y rules), TypeScript 7, production build |
@@ -70,4 +70,4 @@ CI runs all of these plus dependency audits (`pip-audit`, `pnpm audit`) and a Do
 
 ## Deploy
 
-Step-by-step guide: **[docs/DEPLOY.md](docs/DEPLOY.md)** (Neon → R2 → Render → Pages → GitHub Actions, about an hour, $0/month).
+Step-by-step guide: **[docs/DEPLOY.md](docs/DEPLOY.md)** (Neon → Backblaze B2 → Render → Pages → GitHub Actions, about an hour, $0/month).

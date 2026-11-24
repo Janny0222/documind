@@ -93,10 +93,12 @@ class Settings(BaseSettings):
     internal_api_secret: SecretStr | None = None
 
     # --- Object storage ---
-    # local: files under storage_local_dir (dev/tests). s3: any S3 API - Cloudflare R2 in prod.
+    # local: files under storage_local_dir (dev/tests). s3: any S3 API - Backblaze B2 in prod.
     storage_backend: Literal["local", "s3"] = "local"
     storage_local_dir: str = "var/storage"
-    s3_endpoint_url: str | None = None  # R2: https://<account_id>.r2.cloudflarestorage.com
+    # Any S3-compatible service. Backblaze B2: https://s3.<region>.backblazeb2.com
+    # (region is read from it); Cloudflare R2: https://<account_id>.r2.cloudflarestorage.com
+    s3_endpoint_url: str | None = None
     s3_bucket: str | None = None
     s3_access_key_id: SecretStr | None = None
     s3_secret_access_key: SecretStr | None = None
@@ -106,6 +108,9 @@ class Settings(BaseSettings):
     # --- Documents & processing limits (free-tier guardrails, Phase 1 §G) ---
     max_upload_mb: int = 10
     max_documents_per_workspace: int = 50
+    # Ceiling on all stored uploads across every workspace, so a public deployment can't outgrow
+    # the storage provider's free tier however many people sign up. 0 = no limit.
+    max_total_storage_mb: int = 2048
     max_pages_per_document: int = 300
     max_chunks_per_workspace: int = 15_000
     max_files_per_upload: int = 10

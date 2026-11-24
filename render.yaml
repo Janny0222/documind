@@ -32,6 +32,9 @@ services:
         value: auto
       - key: AI_PROVIDER
         value: gemini
+      # Never store more than this across all workspaces (B2 free tier is 10 GB).
+      - key: MAX_TOTAL_STORAGE_MB
+        value: "2048"
       - key: DB_POOL_SIZE
         value: "3"
       - key: JWT_SECRET
@@ -50,7 +53,7 @@ services:
         sync: false
       - key: GEMINI_API_KEY
         sync: false
-      # https://<account_id>.r2.cloudflarestorage.com
+      # Backblaze B2 bucket endpoint: https://s3.<region>.backblazeb2.com (region is read from it)
       - key: S3_ENDPOINT_URL
         sync: false
       - key: S3_BUCKET

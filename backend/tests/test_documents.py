@@ -468,3 +468,29 @@ async def test_deleting_a_workspace_purges_its_files(make_user: UserFactory) -> 
     await drain()
     assert not folder.exists()
     assert get_storage() is not None
+
+
+async def test_server_wide_storage_cap(
+    make_user: UserFactory, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A public deployment can't outgrow the storage free tier: the cap counts every workspace."""
+    monkeypatch.setattr(get_settings(), "max_total_storage_mb", 1)
+    big = (LOREM + "\n") * (600_000 // (len(LOREM) + 1))  # ~600 KB of valid text
+    alice = await make_user()
+    bob = await make_user("bob@example.com", "Bob")
+    alice_ws, bob_ws = await personal_workspace_id(alice), await personal_workspace_id(bob)
+
+    [first] = await upload(alice, alice_ws, ("a.txt", ("A " + big).encode(), "text/plain"))
+    assert first["outcome"] == "created"
+    # The same file again is a duplicate, not new storage.
+    [dup] = await upload(alice, alice_ws, ("again.txt", ("A " + big).encode(), "text/plain"))
+    assert dup["outcome"] == "duplicate"
+
+    [blocked] = await upload(bob, bob_ws, ("b.txt", ("B " + big).encode(), "text/plain"))
+    assert blocked["outcome"] == "rejected" and blocked["code"] == "storage_full"
+
+    # Deleting frees the space again.
+    r = await alice.delete(f"/api/v1/workspaces/{alice_ws}/documents/{first['document']['id']}")
+    assert r.status_code == 204
+    [ok] = await upload(bob, bob_ws, ("b.txt", ("B " + big).encode(), "text/plain"))
+    assert ok["outcome"] == "created"

@@ -59,7 +59,7 @@ Always read the generated file before committing it. `alembic check` fails in CI
 | `app/api/deps.py` | `get_current_user` and `require_workspace(role)`, the authorization choke point |
 | `app/api/v1/` | thin routers |
 | `migrations/` | Alembic (async) |
-| `app/integrations/storage.py` | Local disk (dev) or S3/R2 (prod) behind one interface; keys are server-generated |
+| `app/integrations/storage.py` | Local disk (dev) or S3-compatible storage (Backblaze B2 in prod) behind one interface; keys are server-generated |
 | `app/rag/` | Ingestion: content-based validation, PDF/DOCX/TXT parsing, normalization, page-aware chunking |
 | `app/workers/` | Postgres job queue (`SKIP LOCKED` + leases), in-process runner, idempotent handlers |
 | `tests/` | pytest against real Postgres: auth, roles, isolation, ingestion, jobs; S3 via moto |

@@ -96,7 +96,7 @@ export function useReprocessDocument(ws: string) {
 
 export async function downloadDocument(ws: string, id: string) {
   const { url } = await http.get<{ url: string }>(`${base(ws)}/documents/${id}/download`)
-  // Same-origin API URL (local) or a 60-second presigned R2 URL (production).
+  // Same-origin API URL (local) or a 60-second presigned B2 URL (production).
   window.location.assign(url)
 }
 
