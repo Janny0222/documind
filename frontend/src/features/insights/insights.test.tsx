@@ -91,7 +91,8 @@ describe('analytics', () => {
   it('shows KPIs, charts with a table view, and labels cost as an estimate', async () => {
     server.use(http.get(`${API}/workspaces/:id/analytics`, () => HttpResponse.json(analytics)), ...signedIn(undefined, [team]))
     const { user } = renderApp(`/w/${testWorkspace.id}/analytics`)
-    expect(await screen.findByRole('heading', { name: 'Usage & analytics' })).toBeInTheDocument()
+    // The page lazy-loads Recharts; on a cold cache (CI) transforming it alone can take several seconds.
+    expect(await screen.findByRole('heading', { name: 'Usage & analytics' }, { timeout: 15_000 })).toBeInTheDocument()
     expect(await screen.findByText('75%')).toBeInTheDocument() // 9 of 12 answered from documents
     expect(screen.getByText(/not a bill/)).toBeInTheDocument()
     expect(screen.getByRole('img', { name: /12 in total/ })).toBeInTheDocument()

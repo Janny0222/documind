@@ -43,6 +43,8 @@ import { atLeast, type ChatMessage, type Citation, type ConversationDetail, type
 import { cn } from '@/lib/utils'
 
 interface LiveAnswer {
+  /** The conversation this answer streams into. */
+  conversationId: string
   question: string
   text: string
   citations: Citation[]
@@ -85,16 +87,28 @@ export function AskPage() {
     bottom.current?.scrollIntoView({ block: 'end' })
   }, [conversation?.messages.length, live?.text])
 
-  // Clear the source panel and live answer when switching conversations.
+  // Clear the source panel and live answer when switching conversations. The first question of a
+  // new conversation also changes conversationId (/ask -> /ask/:id), and on a slow device this
+  // effect can run after that answer has started streaming - so keep an answer that belongs here.
   useEffect(() => {
     setSource(null)
-    setLive(null)
+    setLive((l) => (l && l.conversationId === conversationId ? l : null))
   }, [conversationId])
 
   async function run(conversation: string, path: string, body: unknown, question: string, regenerating = false) {
     const controller = new AbortController()
     abort.current = controller
-    setLive({ question, text: '', citations: [], suggestions: [], retrieval: null, error: null, regenerating, phase: 'streaming' })
+    setLive({
+      conversationId: conversation,
+      question,
+      text: '',
+      citations: [],
+      suggestions: [],
+      retrieval: null,
+      error: null,
+      regenerating,
+      phase: 'streaming',
+    })
     try {
       await streamAnswer(
         path,
