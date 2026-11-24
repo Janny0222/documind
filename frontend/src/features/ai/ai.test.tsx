@@ -135,6 +135,56 @@ describe('AI workspace', () => {
     expect(highlighted).toHaveTextContent(CITED) // exactly the cited span, nothing more
   })
 
+  // Regression: "Ask about this" scoped correctly but only said "One document", so it looked broken.
+  it('names the document when opened from "Ask about this" and scopes the question to it', async () => {
+    let createdWith: unknown = null
+    server.use(
+      http.get(`${API}/workspaces/:id/ai/status`, () =>
+        HttpResponse.json({ configured: true, consent: true, questions_left_today: 29, daily_limit: 30, chat_model: 'm' }),
+      ),
+      http.get(`${API}/workspaces/:id/conversations`, () => HttpResponse.json([])),
+      http.get(`${API}/workspaces/:id/documents/d1`, () =>
+        HttpResponse.json({ id: 'd1', title: 'Employee Handbook', status: 'ready', file_type: 'pdf' }),
+      ),
+      http.post(`${API}/workspaces/:id/conversations`, async ({ request }) => {
+        createdWith = await request.json()
+        return HttpResponse.json({ id: 'conv9', title: 'New conversation', scope: { type: 'documents', ids: ['d1'] }, created_at: '', updated_at: '' }, { status: 201 })
+      }),
+      http.post(`${API}/workspaces/:id/conversations/conv9/messages`, () => sse([['done', {}]])),
+      http.get(`${API}/workspaces/:id/conversations/conv9`, () =>
+        HttpResponse.json({ id: 'conv9', title: 'x', scope: { type: 'documents', ids: ['d1'] }, created_at: '', updated_at: '', messages: [] }),
+      ),
+      ...signedIn(),
+    )
+    document.cookie = 'dm_csrf=t; path=/'
+    const { user } = renderApp(`/w/${testWorkspace.id}/ask?doc=d1`)
+    expect(await screen.findByRole('heading', { name: 'Ask about “Employee Handbook”' }, { timeout: 5000 })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Only: Employee Handbook' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Summarize this document' })).toBeInTheDocument()
+
+    const input = screen.getByLabelText('Ask a question about your documents')
+    await waitFor(() => expect(input).toBeEnabled())
+    await user.type(input, 'Summarize it{Enter}')
+    await waitFor(() => expect(createdWith).toEqual({ scope: { type: 'documents', ids: ['d1'] } }))
+  })
+
+  it('lets you widen a single-document question to all documents', async () => {
+    server.use(
+      http.get(`${API}/workspaces/:id/ai/status`, () =>
+        HttpResponse.json({ configured: true, consent: true, questions_left_today: 29, daily_limit: 30, chat_model: 'm' }),
+      ),
+      http.get(`${API}/workspaces/:id/conversations`, () => HttpResponse.json([])),
+      http.get(`${API}/workspaces/:id/documents/d1`, () =>
+        HttpResponse.json({ id: 'd1', title: 'Employee Handbook', status: 'ready', file_type: 'pdf' }),
+      ),
+      ...signedIn(),
+    )
+    const { user } = renderApp(`/w/${testWorkspace.id}/ask?doc=d1`)
+    await user.click(await screen.findByRole('button', { name: 'Ask all documents instead' }, { timeout: 5000 }))
+    expect(await screen.findByRole('heading', { name: 'Ask your documents' })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Search in' })).toHaveValue('all')
+  })
+
   it('explains when AI processing has not been allowed', async () => {
     server.use(
       http.get(`${API}/workspaces/:id/ai/status`, () =>

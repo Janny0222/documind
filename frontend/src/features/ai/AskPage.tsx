@@ -34,7 +34,7 @@ import {
 import { AnswerText } from '@/features/ai/AnswerText'
 import { SourcePanel } from '@/features/ai/SourcePanel'
 import { streamAnswer } from '@/features/ai/stream'
-import { useCollections } from '@/features/documents/api'
+import { useCollections, useDocument } from '@/features/documents/api'
 import { useGrantAiConsent } from '@/features/workspaces/api'
 import { useCurrentWorkspace } from '@/features/workspaces/current'
 import { wsPath } from '@/layouts/nav'
@@ -229,7 +229,7 @@ export function AskPage() {
               <Skeleton className="h-24 w-3/4 rounded-2xl" />
             </div>
           ) : messages.length === 0 && !showLive ? (
-            <EmptyThread onPick={(q) => setInput(q)} />
+            <EmptyThread scope={scope} onPick={(q) => setInput(q)} onAskEverything={() => setDraftScope({ type: 'workspace' })} />
           ) : (
             <ol className="space-y-6 pb-4">
               {messages.map((m) => (
@@ -486,7 +486,10 @@ function Composer({
 function ScopePicker({ scope, onChange }: { scope: Scope; onChange: (s: Scope) => void }) {
   const workspace = useCurrentWorkspace()
   const { data: collections = [] } = useCollections(workspace.id)
+  const docTitle = useScopedDocumentTitle(scope)
   const value = scope.type === 'collection' ? `c:${scope.id}` : scope.type === 'documents' ? 'docs' : 'all'
+  const docsLabel =
+    scope.type !== 'documents' ? '' : scope.ids.length > 1 ? `${scope.ids.length} documents` : docTitle ? `Only: ${docTitle}` : 'One document'
   return (
     <>
       <label htmlFor="scope" className="sr-only">
@@ -508,11 +511,7 @@ function ScopePicker({ scope, onChange }: { scope: Scope; onChange: (s: Scope) =
             Collection: {c.name}
           </option>
         ))}
-        {scope.type === 'documents' ? (
-          <option value="docs">
-            {scope.ids.length === 1 ? 'One document' : `${scope.ids.length} documents`}
-          </option>
-        ) : null}
+        {scope.type === 'documents' ? <option value="docs">{docsLabel}</option> : null}
       </select>
     </>
   )
@@ -564,16 +563,38 @@ function StatusBanner() {
   )
 }
 
-function EmptyThread({ onPick }: { onPick: (q: string) => void }) {
-  const examples = ['Summarize the key points', 'What are the deadlines and notice periods?', 'Which document mentions cancellation?']
+const SINGLE_DOC_EXAMPLES = ['Summarize this document', 'What are the key dates and deadlines?', 'What are the main rules or obligations?']
+const WORKSPACE_EXAMPLES = ['Summarize the key points', 'What are the deadlines and notice periods?', 'Which document mentions cancellation?']
+
+/** Title of the one document a "documents" scope points at (null while loading or for other scopes). */
+function useScopedDocumentTitle(scope: Scope): string | null {
+  const workspace = useCurrentWorkspace()
+  const id = scope.type === 'documents' && scope.ids.length === 1 ? (scope.ids[0] ?? null) : null
+  const { data } = useDocument(workspace.id, id)
+  return id && data ? data.title : null
+}
+
+function EmptyThread({ scope, onPick, onAskEverything }: { scope: Scope; onPick: (q: string) => void; onAskEverything: () => void }) {
+  const docTitle = useScopedDocumentTitle(scope)
+  const single = scope.type === 'documents' && scope.ids.length === 1
+  const examples = single ? SINGLE_DOC_EXAMPLES : WORKSPACE_EXAMPLES
   return (
     <div className="grid h-full place-items-center px-4 text-center">
       <div className="max-w-md">
         <Sparkles className="text-primary mx-auto size-8" aria-hidden />
-        <h2 className="mt-3 text-xl font-semibold">Ask your documents</h2>
+        <h2 className="mt-3 text-xl font-semibold break-words">
+          {single ? (docTitle ? `Ask about “${docTitle}”` : 'Ask about this document') : 'Ask your documents'}
+        </h2>
         <p className="text-muted-foreground mt-1 text-sm">
-          Answers use only the documents in the selected scope, and every claim links to the passage it came from.
+          {single
+            ? 'Answers use only this document, and every claim links to the passage it came from.'
+            : 'Answers use only the documents in the selected scope, and every claim links to the passage it came from.'}
         </p>
+        {scope.type === 'documents' ? (
+          <button type="button" onClick={onAskEverything} className="text-primary mt-2 text-sm font-medium hover:underline">
+            Ask all documents instead
+          </button>
+        ) : null}
         <div className="mt-5 flex flex-wrap justify-center gap-2">
           {examples.map((q) => (
             <button key={q} type="button" onClick={() => onPick(q)} className="bg-card hover:border-primary/40 rounded-full border px-3 py-1.5 text-sm transition-colors">
@@ -598,7 +619,7 @@ function ConversationRail({ activeId, onNavigate }: { activeId?: string; onNavig
           <MessageSquarePlus aria-hidden /> New conversation
         </Link>
       </Button>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
         {isPending ? (
           <div className="grid gap-2">
             {[0, 1, 2].map((i) => (
@@ -610,7 +631,7 @@ function ConversationRail({ activeId, onNavigate }: { activeId?: string; onNavig
         ) : (
           <ul className="grid gap-0.5">
             {conversations.map((c) => (
-              <li key={c.id} className="group relative">
+              <li key={c.id} className="group relative min-w-0">
                 <Link
                   to={wsPath(workspace.id, `ask/${c.id}`)}
                   onClick={onNavigate}
