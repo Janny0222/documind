@@ -160,11 +160,11 @@ describe('AI workspace', () => {
     const { user } = renderApp(`/w/${testWorkspace.id}/ask?doc=d1`)
     expect(await screen.findByRole('heading', { name: 'Ask about “Employee Handbook”' }, { timeout: 5000 })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Only: Employee Handbook' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Summarize this document' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'What are the key dates and deadlines?' })).toBeInTheDocument()
 
     const input = screen.getByLabelText('Ask a question about your documents')
     await waitFor(() => expect(input).toBeEnabled())
-    await user.type(input, 'Summarize it{Enter}')
+    await user.type(input, 'When does it start?{Enter}')
     await waitFor(() => expect(createdWith).toEqual({ scope: { type: 'documents', ids: ['d1'] } }))
   })
 

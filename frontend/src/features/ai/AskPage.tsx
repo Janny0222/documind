@@ -563,8 +563,8 @@ function StatusBanner() {
   )
 }
 
-const SINGLE_DOC_EXAMPLES = ['Summarize this document', 'What are the key dates and deadlines?', 'What are the main rules or obligations?']
-const WORKSPACE_EXAMPLES = ['Summarize the key points', 'What are the deadlines and notice periods?', 'Which document mentions cancellation?']
+const SINGLE_DOC_EXAMPLES = ['What are the key dates and deadlines?', 'What are the main rules or obligations?', 'Who are the parties involved?']
+const WORKSPACE_EXAMPLES = ['What are the deadlines and notice periods?', 'Which document mentions cancellation?', 'How many vacation days do employees get?']
 
 /** Title of the one document a "documents" scope points at (null while loading or for other scopes). */
 function useScopedDocumentTitle(scope: Scope): string | null {

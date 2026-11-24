@@ -5,8 +5,8 @@ import { wsPath } from '@/layouts/nav'
 import { cn } from '@/lib/utils'
 
 const suggestions = [
-  'Summarize this document',
   'What are the key dates and deadlines?',
+  'How many vacation days do employees get?',
   'Which document mentions the cancellation policy?',
 ]
 
