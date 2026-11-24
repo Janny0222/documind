@@ -29,24 +29,42 @@ jobs:
       # Settings requires a JWT secret to load; migrations never use it.
       JWT_SECRET: migrations-only-not-used-for-signing-0000000000
     steps:
-      - name: Check secrets
+      # Runs before checkout, so it can't use the job's default working directory (backend/).
+      - name: Check deployment is configured
+        id: check
+        working-directory: .
         run: |
+          missing=""
           for name in MIGRATIONS_DATABASE_URL RENDER_DEPLOY_HOOK_URL API_URL; do
-            if [ -z "${!name}" ]; then echo "::error::Secret for $name is not set (see docs/DEPLOY.md)"; exit 1; fi
+            if [ -z "${!name}" ]; then missing="$missing $name"; fi
           done
+          if [ -z "$missing" ]; then echo "ready=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          msg="Deployment secrets not set:$missing (see docs/DEPLOY.md, step 5)"
+          # A manual run means "deploy now", so missing secrets are an error. After CI on main they
+          # just mean deployment isn't set up yet: skip with a warning instead of failing the push.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then echo "::error::$msg"; exit 1; fi
+          echo "::warning::$msg - skipping deploy"
+          echo "ready=false" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
+        if: steps.check.outputs.ready == 'true'
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: astral-sh/setup-uv@v6
+        if: steps.check.outputs.ready == 'true'
         with:
           enable-cache: true
-      - run: uv python install 3.14
-      - run: uv sync --frozen --no-dev
+      - if: steps.check.outputs.ready == 'true'
+        run: uv python install 3.14
+      - if: steps.check.outputs.ready == 'true'
+        run: uv sync --frozen --no-dev
       - name: Migrate database
+        if: steps.check.outputs.ready == 'true'
         run: uv run alembic upgrade head
       - name: Trigger Render deploy
+        if: steps.check.outputs.ready == 'true'
         run: curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL" > /dev/null
       - name: Wait until the new version is healthy
+        if: steps.check.outputs.ready == 'true'
         run: |
           # Render builds the image (a few minutes), then swaps traffic. /readyz also proves the DB is migrated.
           for i in $(seq 1 60); do
